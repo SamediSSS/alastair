@@ -1,14 +1,16 @@
 import os
-import numpy as np
-import pandas as pd
-import requests as req
 import re
 import time
 import asyncio
-import aiohttp
-from datetime import datetime
-import matplotlib.pyplot as plt
 import logging
+
+import aiohttp
+import numpy as np
+import pandas as pd
+import requests as req
+import matplotlib.pyplot as plt
+
+from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
