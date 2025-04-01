@@ -573,8 +573,10 @@ async def sort_and_send_results(call: CallbackQuery):
     if filtered_df.empty:
         await call.message.answer("❌ Нет данных по заданным фильтрам.")
         return
-
-    sorted_df = filtered_df.sort_values(by=sort_col, ascending=False).head(25)
+    if sort_col == 'c_spread':
+        sorted_df = filtered_df[filtered_df['c_spread']<1000].sort_values(by=sort_col, ascending=False).head(25)
+    else:    
+        sorted_df = filtered_df.sort_values(by=sort_col, ascending=False).head(25)
 
     # --- Генерация изображения ---
     img_path = await df_to_image(sorted_df, chat_id)
