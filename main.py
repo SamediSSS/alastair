@@ -574,7 +574,7 @@ async def sort_and_send_results(call: CallbackQuery):
         await call.message.answer("❌ Нет данных по заданным фильтрам.")
         return
     if sort_col == 'c_spread':
-        sorted_df = filtered_df[filtered_df['c_spread']<1000].sort_values(by=sort_col, ascending=False).head(25)
+        sorted_df = filtered_df[filtered_df['c_spread']<200].sort_values(by=sort_col, ascending=False).head(25)
     else:    
         sorted_df = filtered_df.sort_values(by=sort_col, ascending=False).head(25)
 
