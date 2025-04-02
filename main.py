@@ -364,7 +364,7 @@ async def get_data():
 
 
 TOKEN = "7940678057:AAHt4xo8nDnqxstlB5qkk2F0J2KBmBXrFSk"
-CHAT_ID = 432007724
+CHAT_ID = [432007724, 432007724] 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -386,19 +386,20 @@ async def check_and_send():
             #filtered_df = data[(data['c_spread'] > 8) & (data['c_spread'] < 50)]
             #if not filtered_df.empty:
             #    await bot.send_message(CHAT_ID, f"⚠️ Найдены строки с курсовым спредом в диапазоне (8,50)")
-            if CHAT_ID in user_watch and len(user_watch[CHAT_ID]) == 3:
-                coin, short, long = user_watch.get(CHAT_ID, [])
-                result = data[(data['coin'] == coin) & (data['short'] == short) & (data['long'] == long)]
-                row = result.iloc[0]
-                if (not result.empty) and (row['c_spread']<0):
-                    response = (f"📊 Данные для {coin}:\n"
-                                f"🔹Short: {short} 🔹Long: {long}\n"
-                                f"💰Bid Price: {row['bidPrice']:.5f} 💵Ask Price: {row['askPrice']:.5f}\n"
-                                f"📉f_short: {row['f_s']:.5f}\t 📈f_long: {row['f_l']:.5f}\t Расчет: {row['p_t']:.5f}\n"
-                                f"☣️Cпреды: Course: {row['c_spread']:.5f}\t Fund: {row['f_spread']:.5f}\t cf: {row['cf_spread']:.5f}\n"
-                                f"⚠️Спред упал, отслеживание сброшено.")
-                    del user_watch[CHAT_ID]
-                    await bot.send_message(CHAT_ID, response)
+            for id in CHAT_ID:
+                if id in user_watch and len(user_watch[id]) == 3:
+                    coin, short, long = user_watch.get(id, [])
+                    result = data[(data['coin'] == coin) & (data['short'] == short) & (data['long'] == long)]
+                    row = result.iloc[0]
+                    if (not result.empty) and (row['c_spread']<0):
+                        response = (f"📊 Данные для {coin}:\n"
+                                    f"🔹Short: {short} 🔹Long: {long}\n"
+                                    f"💰Bid Price: {row['bidPrice']:.5f} 💵Ask Price: {row['askPrice']:.5f}\n"
+                                    f"📉f_short: {row['f_s']:.5f}\t 📈f_long: {row['f_l']:.5f}\t Расчет: {row['p_t']:.5f}\n"
+                                    f"☣️Cпреды: Course: {row['c_spread']:.5f}\t Fund: {row['f_spread']:.5f}\t cf: {row['cf_spread']:.5f}\n"
+                                    f"⚠️Спред упал, отслеживание сброшено.")
+                        del user_watch[id]
+                        await bot.send_message(id, response)
             print('Обновление!')
             await asyncio.sleep(0.5)
         except KeyboardInterrupt:
