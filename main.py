@@ -526,7 +526,6 @@ async def handle_second_value(call: CallbackQuery):
     """Обрабатываем второй выбор из инлайн-кнопок"""
     global watch_flag
     user_watch[call.message.chat.id].append(call.data)
-    if int(call.message.chat.id) == int(CHAT_ID): watch_flag = True
     await call.message.edit_text(f"✅ Отслеживание запущено для: {user_watch[call.message.chat.id]}")
     
 @dp.message(lambda message: message.text == "Запрос результатов")
