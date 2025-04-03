@@ -327,7 +327,7 @@ async def get_data():
             for j in range(len(futures)) if i != j
         ]
         spreads_f = pd.concat(spreads_list, ignore_index=True)
-        spreads_f['s'] = False
+        spreads_f['f'] = True
 
         spreads_list = [
             futures[i][['coin', 'bidPrice', 'short', 'f_s', 't_s']]
@@ -338,7 +338,7 @@ async def get_data():
             for j in range(len(spot))
         ]
         spreads_s = pd.concat(spreads_list, ignore_index=True)
-        spreads_s['s'] = True
+        spreads_s['f'] = False
 
         spreads = pd.concat([spreads_f, spreads_s], ignore_index=True)
 
@@ -459,7 +459,6 @@ def get_values_keyboard():
     keyboard.adjust(2)  # Два столбца
     return keyboard.as_markup()
 
-
 def get_sort_keyboard():
     """Клавиатура для сортировки"""
     keyboard = InlineKeyboardBuilder()
@@ -467,7 +466,14 @@ def get_sort_keyboard():
         keyboard.button(text=f"Сортировать по {col}", callback_data=f"sort_{col}")
     keyboard.adjust(1)
     return keyboard.as_markup()
-
+    
+def get_spot_keyboard():
+    """Клавиатура для спота"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=f"Да", callback_data='True')
+    keyboard.button(text=f"Нет", callback_data='False')
+    keyboard.adjust(1)
+    return keyboard.as_markup()
 
 @dp.message(Command("start"))
 async def send_welcome(message: Message):
@@ -523,19 +529,23 @@ async def handle_second_value(call: CallbackQuery):
     if int(call.message.chat.id) == int(CHAT_ID): watch_flag = True
     await call.message.edit_text(f"✅ Отслеживание запущено для: {user_watch[call.message.chat.id]}")
     
-
-
 @dp.message(lambda message: message.text == "Запрос результатов")
 async def request_filters(message: Message):
     """Начинаем запрос фильтров"""
     user_filters[message.chat.id] = {}
     await message.answer("Введите минимальное значение для c_spread:")
 
-
 @dp.message(lambda message: message.chat.id in user_filters and 'c_spread' not in user_filters[message.chat.id])
 async def get_c_spread(message: Message):
     """Получаем минимальное значение c_spread"""
     user_filters[message.chat.id]['c_spread'] = float(message.text)
+    await message.answer("Введите максимальное значение для c_spread:")
+    
+
+@dp.message(lambda message: message.chat.id in user_filters and 'c_spread_m' not in user_filters[message.chat.id])
+async def get_c_spread_m(message: Message):
+    """Получаем максимальное значение для c_spread"""
+    user_filters[message.chat.id]['c_spread_m'] = float(message.text)
     await message.answer("Введите минимальное значение для f_spread:")
 
 
@@ -546,13 +556,19 @@ async def get_f_spread(message: Message):
     await message.answer("Введите минимальное значение для cf_spread:")
 
 
-@dp.message(lambda message: message.chat.id in user_filters and 'cf_spread' not in user_filters[message.chat.id])
+@dp.message(lambda message: message.chat.id in user_filters and 'сf_spread' not in user_filters[message.chat.id])
 async def get_cf_spread(message: Message):
-    """Получаем минимальное значение cf_spread и предлагаем сортировку"""
+    """Получаем минимальное значение cf_spread"""
     user_filters[message.chat.id]['cf_spread'] = float(message.text)
-    await message.answer("Выберите столбец для сортировки:", reply_markup=get_sort_keyboard())
+    await message.answer("Включать спот позиции?", reply_markup = get_spot_keyboard())
 
 
+@dp.callback_query(lambda call: call.message.chat.id in user_filters and 'spot' not in user_filters[call.message.chat.id])
+async def get_spot(call: CallbackQuery):
+    """Получаем включение спот позиций и предлагаем сортировку"""
+    user_filters[call.message.chat.id]['spot'] = call.data
+    await call.message.edit_text("Выберите столбец для сортировки:", reply_markup=get_sort_keyboard())
+    
 @dp.callback_query(lambda call: call.data.startswith("sort_"))
 async def sort_and_send_results(call: CallbackQuery):
     """Фильтруем и сортируем данные, отправляем пользователю"""
@@ -565,10 +581,14 @@ async def sort_and_send_results(call: CallbackQuery):
 
     filters = user_filters.pop(chat_id, {})
 
+    filters['spot'] = filters['spot'].lower() == 'true'
+    
     filtered_df = data[
         (data['c_spread'] > filters['c_spread']) &
+        (data['c_spread'] < filters['c_spread_m']) &
         (data['f_spread'] > filters['f_spread']) &
-        (data['cf_spread'] > filters['cf_spread'])
+        (data['cf_spread'] > filters['cf_spread']) &
+        (data['f'] | filters['spot'])
     ]
 
     if filtered_df.empty:
