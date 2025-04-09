@@ -390,9 +390,13 @@ async def check_and_send():
                     filtered_df = data[
                                     (data['c_spread'] > course_watch[id][0]) & 
                                     (data['c_spread'] < course_watch[id][1]) & 
-                                    (data['f'] | course_watch[id][2])]
+                                    (data['f'] | False]
                     if not filtered_df.empty:
                         course_watch[id][2] = False
+                        img_path = await df_to_image(filtered_df, id)
+                        photo = FSInputFile(img_path)
+                        await bot.send_photo(id, photo, caption="📊 Ваши результаты")
+                        os.remove(img_path)
                         await bot.send_message(id, f"⚠️Найдены пары с курсовым спредом в диапазоне {course_watch[id][0]} - {course_watch[id][1]})\n"
                                                    f"Отслеживание остановлено")
                 if id in user_watch and len(user_watch[id]) == 3:
