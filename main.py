@@ -364,7 +364,7 @@ async def get_data():
 
 
 TOKEN = "7940678057:AAHt4xo8nDnqxstlB5qkk2F0J2KBmBXrFSk"
-CHAT_ID = [432007724, 432007724] 
+CHAT_ID = [432007724, 7342270415] 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
