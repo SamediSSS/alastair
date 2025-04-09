@@ -501,11 +501,11 @@ async def send_welcome(message: Message):
 async def check_or_start_tracking(message: Message):
     """Проверяем, есть ли активное отслеживание курсов или начинаем новое"""
     if message.chat.id in course_watch and len(course_watch[message.chat.id]) == 3 and course_watch[message.chat.id][2] == False:
-        course_watch[message.chat.id][2] == True
+        course_watch[message.chat.id][2] = True
         response = (f"Отслеживание спредов в диапазоне {course_watch[message.chat.id][0]} - {course_watch[message.chat.id][1]} включено!")
         await message.answer(response)
     elif message.chat.id in course_watch and len(course_watch[message.chat.id]) == 3 and course_watch[message.chat.id][2] == True:
-        course_watch[message.chat.id][2] == False
+        course_watch[message.chat.id][2] = False
         response = (f"Отслеживание спредов выключено!")
         await message.answer(response)
     else:
