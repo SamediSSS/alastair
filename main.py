@@ -371,6 +371,7 @@ dp = Dispatcher()
 # Храним список наблюдаемых значений
 user_watch = {}
 user_filters = {}
+course_watch = {}
 data = pd.DataFrame()
 
 # Реальные значения для выбора
@@ -383,10 +384,17 @@ async def check_and_send():
     while True:
         try:
             data = await get_data()
-            #filtered_df = data[(data['c_spread'] > 8) & (data['c_spread'] < 50)]
-            #if not filtered_df.empty:
-            #    await bot.send_message(CHAT_ID, f"⚠️ Найдены строки с курсовым спредом в диапазоне (8,50)")
+
             for id in CHAT_ID:
+                if id in course_watch and len(course_watch[id]) == 3 and course_watch[id][2] == True:
+                    filtered_df = data[
+                                    (data['c_spread'] > course_watch[id][0]) & 
+                                    (data['c_spread'] < course_watch[id][1]) & 
+                                    (data['f'] | course_watch[id][2])]
+                    if not filtered_df.empty:
+                        course_watch[id][2] = False
+                        await bot.send_message(id, f"⚠️Найдены пары с курсовым спредом в диапазоне {course_watch[id][0]} - {course_watch[id][1]})\n"
+                                                   f"Отслеживание остановлено")
                 if id in user_watch and len(user_watch[id]) == 3:
                     coin, short, long = user_watch.get(id, [])
                     result = data[(data['coin'] == coin) & (data['short'] == short) & (data['long'] == long)]
@@ -482,10 +490,48 @@ async def send_welcome(message: Message):
     keyboard.button(text="Отслеживание")
     keyboard.button(text="Сброс отслеживания")
     keyboard.button(text="Запрос результатов")
+    keyboard.button(text="Вкл/выкл отслеживание курсовых спредов")
+    keyboard.button(text="Сброс отслеживания курсовых спредов")
     keyboard.adjust(1)  # Один столбец
 
     await message.answer("Выберите действие:", reply_markup=keyboard.as_markup(resize_keyboard=True))
 
+############################################
+@dp.message(lambda message: message.text == "Вкл/выкл отслеживание курсовых спредов")
+async def check_or_start_tracking(message: Message):
+    """Проверяем, есть ли активное отслеживание курсов или начинаем новое"""
+    if message.chat.id in course_watch and len(course_watch[message.chat.id]) == 3 and course_watch[message.chat.id][2] == False:
+        course_watch[message.chat.id][2] == True
+        response = (f"Отслеживание спредов в диапазоне {course_watch[message.chat.id][0]} - {course_watch[message.chat.id][1]} включено!")
+        await message.answer(response)
+    elif message.chat.id in course_watch and len(course_watch[message.chat.id]) == 3 and course_watch[message.chat.id][2] == True:
+        course_watch[message.chat.id][2] == False
+        response = (f"Отслеживание спредов выключено!")
+        await message.answer(response)
+    else:
+        await message.answer("Введите минимальный спред:")
+        course_watch[message.chat.id] = []
+
+@dp.message(lambda message: message.chat.id in course_watch and len(course_watch[message.chat.id]) == 0)
+async def handle_min_spread(message: Message):
+    course_watch[message.chat.id].append(float(message.text))
+    await message.answer("Введите максимальный спред:")
+
+@dp.message(lambda message: message.chat.id in course_watch and len(course_watch[message.chat.id]) == 1)
+async def handle_coin_input(message: Message):
+    course_watch[message.chat.id].append(float(message.text))
+    course_watch[message.chat.id].append(True)
+    await message.answer("Отслеживание спредов включено!")
+
+@dp.message(lambda message: message.text == "Сброс отслеживания курсовых спредов")
+async def reset_tracking(message: Message):
+    if message.chat.id in course_watch:
+        del course_watch[message.chat.id]
+        await message.answer("🔄 Отслеживание успешно сброшено!")
+    else:
+        await message.answer("⚠️ У вас нет активного отслеживания.")
+        
+############################################
 
 @dp.message(lambda message: message.text == "Отслеживание")
 async def check_or_start_tracking(message: Message):
