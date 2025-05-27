@@ -64,7 +64,7 @@ async def get_data():
             "bybit_s":'https://api.bybit.com/v5/market/tickers?category=spot',                                            #21
             "bingx_s":f'https://open-api.bingx.com/openApi/spot/v1/ticker/24hr?timestamp={int(time.time())}',             #22
             "kucoin_s":'https://api.kucoin.com/api/v1/market/allTickers',                                                 #23
-            "lbank_s":'https://api.lbkex.com/v2/supplement/ticker/price.do',                                              #24
+            "lbank_s":'https://lbkex.net/v2/supplement/ticker/price.do',                                              #24
             "htx_s":'https://api.huobi.pro/market/tickers',                                                               #25
             "bitmart_s":'https://api-cloud.bitmart.com/spot/quotation/v3/tickers',                                        #26
             "xt_s":'https://sapi.xt.com/v4/public/ticker',                                                                #27
@@ -390,7 +390,7 @@ async def check_and_send():
                     filtered_df = data[
                                     (data['c_spread'] > course_watch[id][0]) & 
                                     (data['c_spread'] < course_watch[id][1]) & 
-                                    (data['f'] | False]
+                                    (data['f'] | False)]
                     if not filtered_df.empty:
                         course_watch[id][2] = False
                         img_path = await df_to_image(filtered_df, id)
